@@ -74,13 +74,13 @@ object OsdepymCrawler extends App {
     basicRequest.get(uri"https://www.osdepym.com.ar/PortalCMS/getLocalidadesByZona.htm?idZona=$zoneId").response(asJson[List[City]]).send(backend).body match {
       case Left(e) => throw new IllegalStateException("Failed to read zones", e)
       case Right(value) =>
-        println(s"Resultado exitoso CIUDADES: $value")
+        // println(s"Resultado exitoso CIUDADES: $value")
         value
     }
   }
 
   def readSpecialties(planId: String, zoneId: String): List[Specialty] = {
-    println(s"Consultando especialidades para [plan: $planId - zona: $zoneId]")
+    // println(s"Consultando especialidades para [plan: $planId - zona: $zoneId]")
     basicRequest.cookie("JSESSIONID", "B4A5B3D8DEF4DEA85BB1E51B10BE86E1").acceptEncoding("gzip, deflate, br").header("Accept", "*/*").header("Referer", "https://www.osdepym.com.ar/PortalCMS/app.htm?page=servicios").
       get(uri"https://www.osdepym.com.ar/PortalCMS/getEspecialidadesByZona.htm?idZona=$zoneId&idPlan=$planId").response(asJson[List[Specialty]]).send(backend).body match {
       case Left(e) => throw new IllegalStateException("Failed to read zones", e)
@@ -90,8 +90,8 @@ object OsdepymCrawler extends App {
   }
 
   def readCaregivers(zoneId: String, planId: String, cityId: String, specialtyId: String, page: Int = 0): List[CareGiver] = {
-    println(s"Consultando prestadores para [plan: $planId - zona: $zoneId, ciudad: $cityId, especialidad: $specialtyId]")
-    basicRequest.cookie("JSESSIONID", "B4A5B3D8DEF4DEA85BB1E51B10BE86E1").acceptEncoding("gzip, deflate, br").header("Accept", "*/*").header("Referer", "https://www.osdepym.com.ar/PortalCMS/app.htm?page=servicios").
+    // println(s"Consultando prestadores para [plan: $planId - zona: $zoneId, ciudad: $cityId, especialidad: $specialtyId, page: $page]")
+    basicRequest.acceptEncoding("gzip, deflate, br").header("Accept", "*/*").
       get(uri"https://www.osdepym.com.ar/PortalCMS/getPrestadores.htm?idZona=$zoneId&idPlan=$planId&idBarrioLocalidad=$cityId&idEspecialidad=$specialtyId&page=$page").response(asJson[CareGiverResult]).send(backend).body match {
       case Left(e) => throw new IllegalStateException("Failed to read zones", e)
       case Right(value) =>
@@ -120,11 +120,11 @@ object OsdepymCrawler extends App {
 
   println("MEDICO, ESPECIALIDAD, DOMICILIO, LOCALIDAD, TELEFONO, HORARIOS")
   results.foreach { case (c, phones) =>
-    val medico = c.prestadorDenominacion.replaceAll(",", " ")
-    val domicilio = s"${c.prestadorDomicilioCalle} ${c.prestadorDomicilioNumero} ${c.prestadorDomicilioPiso}"
+    val medico = s"\"${c.prestadorDenominacion}\""
+    val domicilio = s"\"${c.prestadorDomicilioCalle} ${c.prestadorDomicilioNumero} ${c.prestadorDomicilioPiso}\""
     val telefono = phones.mkString(" / ")
-    val ciudad = c.prestadorDomicilioZonaDescripcion
-    val especialidad = c.prestadorDomicilioEspecialidadDescripcion
+    val ciudad = s"\"${c.prestadorDomicilioZonaDescripcion}\""
+    val especialidad = s"\"${c.prestadorDomicilioEspecialidadDescripcion}\""
     val hours = if (c.horariosPrestadorJson != null) decodeOpenHours(c.horariosPrestadorJson).mkString(" / ") else ""
     println(s"$medico, $especialidad, $domicilio, $ciudad, $telefono, $hours")
   }
